@@ -13,4 +13,4 @@
  * @version 1.0
  */
 
-package coe.unosquare.benefits.product;
+package coe.unosquare.benefits.business.model.product;

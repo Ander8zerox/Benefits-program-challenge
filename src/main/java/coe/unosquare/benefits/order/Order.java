@@ -8,7 +8,16 @@
 
 package coe.unosquare.benefits.order;
 
-import coe.unosquare.benefits.product.Product;
+import coe.unosquare.benefits.business.OrderInterface;
+import coe.unosquare.benefits.business.exception.MethodPaymentNotFound;
+import coe.unosquare.benefits.business.impl.OrderMastercardImpl;
+import coe.unosquare.benefits.business.impl.OrderVisaImpl;
+import coe.unosquare.benefits.business.model.payment.PaymentTypeEnum;
+import coe.unosquare.benefits.business.model.product.Product;
+import coe.unosquare.benefits.business.util.Constants;
+import coe.unosquare.benefits.business.util.Utilities;
+
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -33,52 +42,34 @@ public class Order {
      * @param paymentType the payment type
      * @return the double
      */
-    public Double pay(final String paymentType) {
+    public Double pay(final String paymentType) throws MethodPaymentNotFound {
+
         Double discount;
-        if (paymentType.equals("Visa")) {
-            if (products.values()
-                    .stream()
-                    .reduce(0, (totalProductCount, quantity) -> totalProductCount += quantity) >= 10) {
-                discount = 0.15;
-            } else if (products.values()
-                    .stream()
-                    .reduce(0, (totalProductCount, quantity) -> totalProductCount += quantity) >= 7) {
-                discount = 0.10;
-            } else {
-                discount = 0.05;
-            }
-        } else if (paymentType.equals("Mastercard")) {
-            if (products.entrySet()
-                    .stream()
-                    .mapToDouble(product -> product.getKey().getPrice() * product.getValue())
-                    .sum() >= 100) {
-                discount = 0.17;
-            } else if (products.entrySet().stream()
-                    .mapToDouble(product -> product.getKey().getPrice() * product.getValue())
-                    .sum() >= 75) {
-                discount = 0.12;
-            } else {
-                discount = 0.08;
-            }
-        } else {
-            discount = 0.0;
+
+        Map<String, OrderInterface> orderMap = new HashMap<>();
+        orderMap.put(PaymentTypeEnum.VISA.getValue(), new OrderVisaImpl());
+        orderMap.put(PaymentTypeEnum.MASTERCARD.getValue(), new OrderMastercardImpl());
+
+        if(!orderMap.containsKey(paymentType)){
+            throw new MethodPaymentNotFound(Constants.INVALID_PAYMENT_METHOD + paymentType);
+        }else{
+            discount = orderMap.get(paymentType).processOrder(products);
         }
-        double subtotal = products.entrySet()
-                            .stream()
-                            .mapToDouble(product -> product.getKey().getPrice() * product.getValue())
-                            .sum();
-        return subtotal - subtotal * discount;
+
+        return calculateTotalAmount(discount,products);
     }
 
     /**
-     * Print.
+     * calculate the amount to pay.
+     * @param discount
+     * @param products
+     * @return the total amount of the purchase
      */
-    public void print() {
-         products.forEach((product, quantity) ->
-                 System.out.println("Product:{" + product.getName() + ","
-                         + product.getPrice() + ","
-                         + product.getType()
-                         + "},Quantity:" + quantity
-                         + ",Total:" + product.getPrice() * quantity));
+    private Double calculateTotalAmount(double discount, Map<Product, Integer> products){
+        double subtotal = products.entrySet()
+                .stream()
+                .mapToDouble(product -> product.getKey().getProductPrice() * product.getValue())
+                .sum();
+        return subtotal - subtotal * discount;
     }
 }

@@ -8,7 +8,7 @@
 
 package coe.unosquare.benefits.util;
 
-import coe.unosquare.benefits.product.Product;
+import coe.unosquare.benefits.business.model.product.Product;
 
 import java.text.DecimalFormat;
 import java.util.HashMap;
@@ -38,7 +38,7 @@ public final class ProductGenerator {
         IntStream.rangeClosed(1, expectedSize).forEach(id -> {
             products.put(new Product("Product " + id, //product name
                             Double.parseDouble(new DecimalFormat("0.00")
-                                                .format(new Random().nextDouble() * 10.00)), //price
+                                                .format(1.00)), //price
                             new Random().nextInt(3) + 1), //type
                     1); //quantity
         });
